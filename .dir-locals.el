@@ -1,0 +1,1 @@
+((nil . ((eval . (exercism-mode t)))))
