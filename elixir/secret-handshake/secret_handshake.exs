@@ -1,11 +1,7 @@
 defmodule SecretHandshake do
-  import Enum, only: [zip: 2, flat_map: 2, reverse: 1]
-  @acts [
-    &SecretHandshake.wink/1,
-    &SecretHandshake.blink/1,
-    &SecretHandshake.close/1,
-    &SecretHandshake.jump/1
-  ]
+  import Enum, only: [zip: 2, reduce: 3, reverse: 1]
+
+  @acts ["wink", "double blink", "close your eyes", "jump"]
 
   @doc """
   Determine the actions of a secret handshake based on the binary
@@ -24,24 +20,23 @@ defmodule SecretHandshake do
   @spec commands(code :: integer) :: list(String.t())
   def commands(code) do
     Integer.digits(code, 2)
-    |> shake
+    |> to_shake
+    |> reverse
   end
 
-  def wink(0),  do: []
-  def wink(1),  do: ["wink"]
-  def blink(0), do: []
-  def blink(1), do: ["double blink"]
-  def close(0), do: []
-  def close(1), do: ["close your eyes"]
-  def jump(0),  do: []
-  def jump(1),  do: ["jump"]
+  defp add_shake({_, 0}, acc), do: acc
+  defp add_shake({a, 1}, acc), do: [a | acc]
 
-  defp shake([e]), do: make zip(@acts, [e])
-  defp shake([d, e]), do: make zip(@acts, [e, d])
-  defp shake([c, d, e]), do: make zip(@acts, [e, d, c])
-  defp shake([b, c, d, e]), do: make zip(@acts, [e, d, c, b])
-  defp shake([1, b, c, d, e]), do: make zip(reverse(@acts), [b, c, d, e])
-  defp shake(_), do: []
+  defp to_shake([e]), do: reduce(zip(@acts, [e]), [], &add_shake/2)
+  defp to_shake([d, e]), do: reduce(zip(@acts, [e, d]), [], &add_shake/2)
+  defp to_shake([c, d, e]), do: reduce(zip(@acts, [e, d, c]), [], &add_shake/2)
+  defp to_shake([b, c, d, e]), do: reduce(zip(@acts, [e, d, c, b]), [], &add_shake/2)
 
-  defp make(funs), do: flat_map(funs, fn {f, n} -> f.(n) end)
+  defp to_shake([1, b, c, d, e]) do
+    reverse(@acts)
+    |> zip([b, c, d, e])
+    |> reduce([], &add_shake/2)
+  end
+
+  defp to_shake(_), do: []
 end
